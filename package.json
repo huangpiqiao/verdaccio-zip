@@ -1,0 +1,32 @@
+{
+  "name": "verdaccio-zip",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "bin": {
+    "vdo-zip": "src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check": "node ./src/index.js"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ],
+    "plugins": []
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "WULIbinbin",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.20.2",
+    "@babel/preset-env": "^7.20.2",
+    "chalk": "4.1.2",
+    "commander": "^9.4.1",
+    "inquirer": "8.2.5",
+    "log-symbols": "4.1.0",
+    "ora": "5.4.1"
+  }
+}
