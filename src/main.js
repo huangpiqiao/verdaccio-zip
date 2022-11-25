@@ -1,7 +1,7 @@
-import fs from "fs";
+import fs from "fs/promises";
 import { resolve, extname } from "path";
 import fse from "fs-extra";
-import { debounce } from "lodash-es";
+import { debounce, replace } from "lodash-es";
 import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
@@ -17,8 +17,8 @@ function isOldFile(mtms, ot) {
   return mtms < ot;
 }
 
-function sourceInfo(sourcePath) {
-  const stat = fs.statSync(sourcePath);
+async function sourceInfo(sourcePath) {
+  const stat = await fs.stat(sourcePath);
   const info = {
     mtime: stat.mtime,
     mtms: new Date(stat.mtime).getTime(),
@@ -26,8 +26,6 @@ function sourceInfo(sourcePath) {
   };
   return info;
 }
-
-function reversePath(source, dest) {}
 
 export class CopyFile {
   constructor(foldPath, destPath, cb) {
@@ -37,22 +35,30 @@ export class CopyFile {
     this.walk(foldPath);
   }
 
-  walk(foldPath) {
-    fs.readdir(foldPath, (err, result) => {
-      if (err) throw new Error(err);
-      result.forEach((item) => {
-        const itemPath = `${foldPath}/${item}`;
-        const { isDirectory, mtms } = sourceInfo(itemPath);
-        if (isDirectory) {
-          this.walk(itemPath);
-          return;
-        }
-        if (isNotTgz(itemPath)) return;
-        if (isOldFile(mtms, overtime)) return;
-        console.log(itemPath);
-        this.cb();
-      });
+  async walk(foldPath) {
+    const [result, err] = await fs
+      .readdir(foldPath)
+      .then((res) => [res, null])
+      .catch((err) => [null, err]);
+    if (err) throw new Error(err);
+    result.forEach(async (item) => {
+      const itemPath = `${foldPath}/${item}`;
+      const { isDirectory, mtms } = await sourceInfo(itemPath);
+      if (isDirectory) {
+        this.walk(itemPath);
+        return;
+      }
+      if (isNotTgz(itemPath)) return;
+      if (isOldFile(mtms, overtime)) return;
+      this.copy(itemPath);
     });
+  }
+
+  async copy(sourcePath) {
+    const destPath = replace(sourcePath, this.foldPath, this.destPath);
+    console.log(destPath, sourcePath);
+    fse.copyFile(sourcePath, destPath);
+    this.cb();
   }
 
   finally(cb) {
