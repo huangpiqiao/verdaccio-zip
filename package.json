@@ -25,7 +25,10 @@
     "@babel/preset-env": "^7.20.2",
     "chalk": "4.1.2",
     "commander": "^9.4.1",
+    "dayjs": "^1.11.6",
+    "fs-extra": "^10.1.0",
     "inquirer": "8.2.5",
+    "lodash-es": "^4.17.21",
     "log-symbols": "4.1.0",
     "ora": "5.4.1"
   }
