@@ -1,14 +1,20 @@
 import fs from "fs/promises";
-import { existsSync, mkdirSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  rmdirSync,
+  lstatSync,
+  readdirSync,
+  unlinkSync,
+} from "fs";
 import { resolve, extname } from "path";
-import fse from "fs-extra";
 import { debounce, replace } from "lodash-es";
 import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
 import dayjs from "dayjs";
 
-const overtime = new Date("2022-11-20").getTime();
+const overtime = new Date("2022-11-28").getTime();
 
 function isNotTgz(sourcePath) {
   return extname(sourcePath) !== ".tgz";
@@ -36,7 +42,7 @@ function createDestChildsDir(sourceDir, destPath) {
     const dir = (destPath += `/${hash}${
       idx === childsHash.length - 1 ? "/" : ""
     }`);
-    if(!existsSync(dir)){
+    if (!existsSync(dir)) {
       mkdirSync(dir);
     }
   });
@@ -65,16 +71,18 @@ export class CopyFile {
       }
       if (isNotTgz(itemPath)) return;
       if (isOldFile(mtms, overtime)) return;
-      this.copy(itemPath, itemName);
+      this.copy(itemPath, foldPath, itemName);
     });
   }
 
-  async copy(sourcePath, sourceName) {
+  async copy(sourcePath, sourceDir, sourceName) {
     const destPath = replace(sourcePath, this.foldPath, this.destPath);
-    const sourceDir = replace(destPath, sourceName, "");
-    // console.log(existsSync(sourceDir), sourceDir, sourceName);
-    createDestChildsDir(sourceDir, this.destPath);
-    fs.copyFile(sourcePath, destPath);
+    const destDir = replace(destPath, sourceName, "");
+    createDestChildsDir(destDir, this.destPath);
+    const packJsonFrom = (dp) => `${dp}/package.json`;
+    await fs.copyFile(sourcePath, destPath);
+    await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
+    console.log(symbols.success, chalk.black(`当前复制 ${sourcePath}`));
     this.cb();
   }
 
@@ -83,28 +91,21 @@ export class CopyFile {
   }
 }
 
-function copyFile(source, dest) {
-  fs.copyFile(() => {
-    spinner.succeed(chalk.green(`复制完成 ${dest}`));
-  });
-}
-
 export function clearFolder(foldPath) {
-  if (fs.existsSync(foldPath)) {
-    const files = fs.readdirSync(foldPath);
+  // console.log(foldPath)
+  if (existsSync(foldPath)) {
+    const files = readdirSync(foldPath);
     if (!files || files.length === 0) return;
     files.forEach((file) => {
       const curPath = `${foldPath}/${file}`;
-      if (fs.lstatSync(curPath).isDirectory()) {
-        deleteFolder(curPath);
+      if (lstatSync(curPath).isDirectory()) {
+        clearFolder(curPath);
       } else {
-        fs.unlinkSync(curPath);
+        unlinkSync(curPath);
       }
     });
-    // if (foldPath !== destPath) {
-    //   fs.rmdirSync(foldPath);
-    // }
+    rmdirSync(foldPath)
   } else {
-    fs.mkdirSync(foldPath);
+    mkdirSync(foldPath);
   }
 }
