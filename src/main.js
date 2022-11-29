@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import { existsSync, mkdirSync } from "fs";
 import { resolve, extname } from "path";
 import fse from "fs-extra";
 import { debounce, replace } from "lodash-es";
@@ -27,6 +28,20 @@ async function sourceInfo(sourcePath) {
   return info;
 }
 
+function createDestChildsDir(sourceDir, destPath) {
+  const childsHash = replace(sourceDir, destPath, "")
+    .split("/")
+    .filter((hash) => !!hash);
+  childsHash.forEach((hash, idx) => {
+    const dir = (destPath += `/${hash}${
+      idx === childsHash.length - 1 ? "/" : ""
+    }`);
+    if(!existsSync(dir)){
+      mkdirSync(dir);
+    }
+  });
+}
+
 export class CopyFile {
   constructor(foldPath, destPath, cb) {
     this.foldPath = foldPath;
@@ -41,8 +56,8 @@ export class CopyFile {
       .then((res) => [res, null])
       .catch((err) => [null, err]);
     if (err) throw new Error(err);
-    result.forEach(async (item) => {
-      const itemPath = `${foldPath}/${item}`;
+    result.forEach(async (itemName) => {
+      const itemPath = `${foldPath}/${itemName}`;
       const { isDirectory, mtms } = await sourceInfo(itemPath);
       if (isDirectory) {
         this.walk(itemPath);
@@ -50,14 +65,16 @@ export class CopyFile {
       }
       if (isNotTgz(itemPath)) return;
       if (isOldFile(mtms, overtime)) return;
-      this.copy(itemPath);
+      this.copy(itemPath, itemName);
     });
   }
 
-  async copy(sourcePath) {
+  async copy(sourcePath, sourceName) {
     const destPath = replace(sourcePath, this.foldPath, this.destPath);
-    console.log(destPath, sourcePath);
-    fse.copyFile(sourcePath, destPath);
+    const sourceDir = replace(destPath, sourceName, "");
+    // console.log(existsSync(sourceDir), sourceDir, sourceName);
+    createDestChildsDir(sourceDir, this.destPath);
+    fs.copyFile(sourcePath, destPath);
     this.cb();
   }
 
