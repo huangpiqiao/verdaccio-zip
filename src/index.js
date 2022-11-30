@@ -6,7 +6,7 @@ import chalk from "chalk";
 import symbols from "log-symbols";
 import { CopyFile, clearFolder, compress } from "./main.js";
 
-const sourceDir = "/Users/wuzhuobin/Desktop/verdaccio/storage";
+const sourceDir = "/Users/xxxx/Desktop/verdaccio/storage";
 const destDir = resolve("./dist");
 const compressName = "npm.zip";
 
