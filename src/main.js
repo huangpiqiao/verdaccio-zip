@@ -13,8 +13,9 @@ import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
 import dayjs from "dayjs";
+import Zip from 'adm-zip'
 
-const overtime = new Date("2022-11-28").getTime();
+const overtime = new Date("2022-11-30").getTime();
 
 function isNotTgz(sourcePath) {
   return extname(sourcePath) !== ".tgz";
@@ -92,7 +93,6 @@ export class CopyFile {
 }
 
 export function clearFolder(foldPath) {
-  // console.log(foldPath)
   if (existsSync(foldPath)) {
     const files = readdirSync(foldPath);
     if (!files || files.length === 0) return;
@@ -104,8 +104,15 @@ export function clearFolder(foldPath) {
         unlinkSync(curPath);
       }
     });
-    rmdirSync(foldPath)
+    rmdirSync(foldPath);
   } else {
     mkdirSync(foldPath);
   }
+}
+
+export function compress(destDir, destPath) {
+  console.log(destDir,destPath)
+  const admzip = new Zip()
+  admzip.addLocalFolder(destDir);
+  admzip.writeZip(destPath);
 }

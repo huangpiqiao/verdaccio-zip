@@ -4,26 +4,28 @@ import { program } from "commander";
 import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
-import { CopyFile, clearFolder } from "./main.js";
+import { CopyFile, clearFolder, compress } from "./main.js";
 
 const sourceDir = "/Users/wuzhuobin/Desktop/verdaccio/storage";
 const destDir = resolve("./dist");
+const compressName = "npm.zip";
 
-handDeliver(destDir, sourceDir);
+handDeliver();
 
-function handDeliver(destPath, foldPath) {
+function handDeliver() {
   let ms = 0;
-  const spinner = ora(`正在复制文件至 ${destPath} \n`);
+  const spinner = ora(`正在复制文件至 ${destDir} \n`);
   ms = new Date().getTime();
   spinner.start();
-  if (sourceDir === destPath) {
+  if (sourceDir === destDir) {
     spinner.clear();
     console.log(chalk.red("目录错误！"));
     return;
   }
-  clearFolder(destPath);
-  new CopyFile(foldPath, destPath, () => {
+  clearFolder(destDir);
+  new CopyFile(sourceDir, destDir, async () => {
     spinner.succeed(chalk.green(`复制完成 耗时${new Date().getTime() - ms}ms`));
+    await compress(destDir, `./${compressName}`);
   });
 }
 
