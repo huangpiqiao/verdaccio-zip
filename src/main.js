@@ -63,9 +63,7 @@ export class Pack2Zip {
     const { foldPath, destPath, spinner } = this;
     spinner.clear();
     try {
-      console.log(111);
       const res = await this.clearTemp(destPath);
-      console.log(res, 333);
       await this.walk(foldPath);
     } catch (err) {
       spinner.stop();
@@ -82,11 +80,7 @@ export class Pack2Zip {
               this.clearTemp(`${foldPath}/${file}`)
             );
             Promise.all(mapPms).then(() => {
-              console.log(foldPath, 333);
-              if (foldPath === this.destPath) {
-                resolve();
-                return;
-              }
+              if (foldPath === this.destPath) return resolve();
               fs.rmdir(foldPath).then(() => resolve());
             });
           });
@@ -125,6 +119,8 @@ export class Pack2Zip {
   }
 
   async startCompress() {
+    this.spinner = ora("正在压缩文件");
+    this.spinner.start()
     this.compress(this.destPath, this.zipPath);
   }
 
@@ -133,6 +129,6 @@ export class Pack2Zip {
     admzip.addLocalFolder(destDir);
     admzip.writeZip(destPath);
     this.spinner.stop();
-    console.log(symbols.success, chalk.green(`压缩完成-->${this.zipPath}`));
+    console.log(symbols.success, chalk.green(`压缩完成 ${this.zipPath}`));
   }
 }
