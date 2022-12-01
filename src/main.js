@@ -13,9 +13,10 @@ import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
 import dayjs from "dayjs";
-import Zip from 'adm-zip'
+import Zip from "adm-zip";
+import { anyAwait } from "./utils.js";
 
-const overtime = new Date("2022-11-30").getTime();
+const overtime = new Date("2022-11-18").getTime();
 
 function isNotTgz(sourcePath) {
   return extname(sourcePath) !== ".tgz";
@@ -49,19 +50,55 @@ function createDestChildsDir(sourceDir, destPath) {
   });
 }
 
-export class CopyFile {
-  constructor(foldPath, destPath, cb) {
+export class Pack2Zip {
+  constructor(foldPath, destPath, zipPath) {
     this.foldPath = foldPath;
     this.destPath = destPath;
-    this.cb = debounce(cb, 200);
-    this.walk(foldPath);
+    this.zipPath = zipPath;
+    this.finish = debounce(this.startCompress, 200);
+    this.spinner = ora(`正在复制文件至 ${destPath} \n`);
+  }
+
+  async start() {
+    const { foldPath, destPath, spinner } = this;
+    spinner.clear();
+    try {
+      console.log(111);
+      const res = await this.clearTemp(destPath);
+      console.log(res, 333);
+      await this.walk(foldPath);
+    } catch (err) {
+      spinner.stop();
+      console.log(`复制错误:${err}`);
+    }
+  }
+
+  clearTemp(foldPath) {
+    return new Promise((resolve) => {
+      fs.stat(foldPath).then((stat) => {
+        if (stat.isDirectory()) {
+          fs.readdir(foldPath).then((result) => {
+            const mapPms = result.map((file) =>
+              this.clearTemp(`${foldPath}/${file}`)
+            );
+            Promise.all(mapPms).then(() => {
+              console.log(foldPath, 333);
+              if (foldPath === this.destPath) {
+                resolve();
+                return;
+              }
+              fs.rmdir(foldPath).then(() => resolve());
+            });
+          });
+        } else {
+          fs.unlink(foldPath).then(() => resolve());
+        }
+      });
+    });
   }
 
   async walk(foldPath) {
-    const [result, err] = await fs
-      .readdir(foldPath)
-      .then((res) => [res, null])
-      .catch((err) => [null, err]);
+    const [err, result] = await anyAwait(fs.readdir(foldPath));
     if (err) throw new Error(err);
     result.forEach(async (itemName) => {
       const itemPath = `${foldPath}/${itemName}`;
@@ -84,35 +121,18 @@ export class CopyFile {
     await fs.copyFile(sourcePath, destPath);
     await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
     console.log(symbols.success, chalk.black(`当前复制 ${sourcePath}`));
-    this.cb();
+    this.finish();
   }
 
-  finally(cb) {
-    cb();
+  async startCompress() {
+    this.compress(this.destPath, this.zipPath);
   }
-}
 
-export function clearFolder(foldPath) {
-  if (existsSync(foldPath)) {
-    const files = readdirSync(foldPath);
-    if (!files || files.length === 0) return;
-    files.forEach((file) => {
-      const curPath = `${foldPath}/${file}`;
-      if (lstatSync(curPath).isDirectory()) {
-        clearFolder(curPath);
-      } else {
-        unlinkSync(curPath);
-      }
-    });
-    rmdirSync(foldPath);
-  } else {
-    mkdirSync(foldPath);
+  compress(destDir, destPath) {
+    const admzip = new Zip();
+    admzip.addLocalFolder(destDir);
+    admzip.writeZip(destPath);
+    this.spinner.stop();
+    console.log(symbols.success, chalk.green(`压缩完成-->${this.zipPath}`));
   }
-}
-
-export function compress(destDir, destPath) {
-  console.log(destDir,destPath)
-  const admzip = new Zip()
-  admzip.addLocalFolder(destDir);
-  admzip.writeZip(destPath);
 }
