@@ -8,6 +8,7 @@ specifiers:
   commander: ^9.4.1
   compressing: ^1.6.2
   dayjs: ^1.11.6
+  dotenv: ^16.0.3
   fs-extra: ^10.1.0
   inquirer: 8.2.5
   lodash-es: ^4.17.21
@@ -22,6 +23,7 @@ dependencies:
   commander: 9.4.1
   compressing: 1.6.2
   dayjs: 1.11.6
+  dotenv: 16.0.3
   fs-extra: 10.1.0
   inquirer: 8.2.5
   lodash-es: 4.17.21
@@ -1458,6 +1460,11 @@ packages:
     resolution: {integrity: sha512-eFuaLoy/Rxalv2kr+lqMlUnrDWV+3j4pljOIJgLIhI058IQfWJ7vXhyEIHu+HtC738klGALYxOKDO0bQP3tg8A==}
     dependencies:
       clone: 1.0.4
+    dev: false
+
+  /dotenv/16.0.3:
+    resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
+    engines: {node: '>=12'}
     dev: false
 
   /electron-to-chromium/1.4.284:

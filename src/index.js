@@ -1,13 +1,13 @@
 import fs from "fs";
-import { resolve } from "path";
+import { resolve, join } from "path";
 import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
 import { Pack2Zip } from "./main.js";
 
-const sourceDir = "/Users/xxx/Desktop/verdaccio/storage";
-const destDir = "/Users/xxx/Desktop/verdaccio/temp";
-const zipPath = "/Users/xxx/Desktop/verdaccio/npm.zip";
+const sourceDir = "/Users/xxxx/Desktop/verdaccio/storage";
+const destDir = join(sourceDir, "../temp");
+const zipPath = join(sourceDir, "../npm.zip");
 
 handDeliver();
 

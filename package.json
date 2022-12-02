@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "check": "node ./src/index.js",
+    "check": "set NODE_ENV=development && node ./src/index.js",
     "del": "rm -rf ./dist"
   },
   "babel": {
