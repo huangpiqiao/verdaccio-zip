@@ -16,7 +16,7 @@ import dayjs from "dayjs";
 import Zip from "adm-zip";
 import { anyAwait } from "./utils.js";
 
-const overtime = new Date("2022-12-02").getTime();
+const overtime = new Date("2022-12-05").getTime();
 
 function isNotTgz(sourcePath) {
   return extname(sourcePath) !== ".tgz";
