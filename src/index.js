@@ -16,6 +16,7 @@ program
   .description("Compress relevant npm files into zip")
   // .version(require('../package.json').version)
   .option("-s, --source <url>", "verdaccio source", "")
+  .option("-d, --date <date>", "verdaccio date", "")
   .parse(process.argv);
 
 console.log(program.opts());
@@ -23,11 +24,6 @@ console.log(program.opts());
 // handDeliver();
 
 async function handDeliver() {
-  let ms = 0;
-  ms = new Date().getTime();
-  if (sourceDir === destDir) {
-    console.log(chalk.red("目录错误！"));
-    return;
-  }
+  
   new Pack2Zip(sourceDir, destDir, zipPath).start();
 }
