@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import { existsSync, mkdirSync } from "fs";
 import { resolve, extname } from "path";
-import { debounce, replace } from "lodash-es";
+import debounce from "lodash/debounce";
+import replace from "lodash/replace";
 import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
