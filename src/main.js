@@ -1,22 +1,12 @@
 import fs from "fs/promises";
-import {
-  existsSync,
-  mkdirSync,
-  rmdirSync,
-  lstatSync,
-  readdirSync,
-  unlinkSync,
-} from "fs";
+import { existsSync, mkdirSync } from "fs";
 import { resolve, extname } from "path";
 import { debounce, replace } from "lodash-es";
 import ora from "ora";
 import chalk from "chalk";
 import symbols from "log-symbols";
-import dayjs from "dayjs";
 import Zip from "adm-zip";
 import { anyAwait } from "./utils.js";
-
-const overtime = new Date("2022-12-05").getTime();
 
 function isNotTgz(sourcePath) {
   return extname(sourcePath) !== ".tgz";
@@ -36,12 +26,12 @@ async function sourceInfo(sourcePath) {
   return info;
 }
 
-function createDestChildsDir(sourceDir, destPath) {
-  const childsHash = replace(sourceDir, destPath, "")
+function createDestChildsDir(sourceDir, destDir) {
+  const childsHash = replace(sourceDir, destDir, "")
     .split("/")
     .filter((hash) => !!hash);
   childsHash.forEach((hash, idx) => {
-    const dir = (destPath += `/${hash}${
+    const dir = (destDir += `/${hash}${
       idx === childsHash.length - 1 ? "/" : ""
     }`);
     if (!existsSync(dir)) {
@@ -51,66 +41,67 @@ function createDestChildsDir(sourceDir, destPath) {
 }
 
 export class Pack2Zip {
-  constructor(foldPath, destPath, zipPath) {
-    this.foldPath = foldPath;
-    this.destPath = destPath;
+  constructor({ sourceDir, destDir, zipPath, selectedDate }) {
+    this.sourceDir = sourceDir;
+    this.destDir = destDir;
     this.zipPath = zipPath;
+    this.selectedDate = new Date(selectedDate).getTime();
     this.finish = debounce(this.startCompress, 200);
-    this.spinner = ora(`正在复制文件至 ${destPath} \n`);
+    this.spinner = ora(`正在复制文件至 ${destDir} \n`);
   }
 
   async start() {
-    const { foldPath, destPath, spinner } = this;
+    const { sourceDir, destDir, spinner } = this;
     spinner.clear();
     try {
-      const res = await this.clearTemp(destPath);
-      await this.walk(foldPath);
+      const res = await this.clearTemp(destDir);
+      await this.walk(sourceDir);
     } catch (err) {
       spinner.stop();
       console.log(`复制错误:${err}`);
     }
   }
 
-  clearTemp(foldPath) {
+  clearTemp(sourceDir) {
     return new Promise((resolve) => {
-      fs.stat(foldPath).then((stat) => {
+      fs.stat(sourceDir).then((stat) => {
         if (stat.isDirectory()) {
-          fs.readdir(foldPath).then((result) => {
+          fs.readdir(sourceDir).then((result) => {
             const mapPms = result.map((file) =>
-              this.clearTemp(`${foldPath}/${file}`)
+              this.clearTemp(`${sourceDir}/${file}`)
             );
             Promise.all(mapPms).then(() => {
-              if (foldPath === this.destPath) return resolve();
-              fs.rmdir(foldPath).then(() => resolve());
+              if (sourceDir === this.destDir) return resolve();
+              fs.rmdir(sourceDir).then(() => resolve());
             });
           });
         } else {
-          fs.unlink(foldPath).then(() => resolve());
+          fs.unlink(sourceDir).then(() => resolve());
         }
       });
     });
   }
 
-  async walk(foldPath) {
-    const [err, result] = await anyAwait(fs.readdir(foldPath));
+  async walk(sourceDir) {
+    const [err, result] = await anyAwait(fs.readdir(sourceDir));
     if (err) throw new Error(err);
     result.forEach(async (itemName) => {
-      const itemPath = `${foldPath}/${itemName}`;
+      const itemPath = `${sourceDir}/${itemName}`;
       const { isDirectory, mtms } = await sourceInfo(itemPath);
       if (isDirectory) {
         this.walk(itemPath);
         return;
       }
       if (isNotTgz(itemPath)) return;
-      if (isOldFile(mtms, overtime)) return;
-      this.copy(itemPath, foldPath, itemName);
+      if (isOldFile(mtms, this.selectedDate)) return;
+      this.copy(itemPath, sourceDir, itemName);
     });
   }
 
   async copy(sourcePath, sourceDir, sourceName) {
-    const destPath = replace(sourcePath, this.foldPath, this.destPath);
+    const destPath = replace(sourcePath, this.sourceDir, this.destDir);
     const destDir = replace(destPath, sourceName, "");
-    createDestChildsDir(destDir, this.destPath);
+    createDestChildsDir(destDir, this.destDir);
     const packJsonFrom = (dp) => `${dp}/package.json`;
     await fs.copyFile(sourcePath, destPath);
     await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
@@ -120,14 +111,14 @@ export class Pack2Zip {
 
   async startCompress() {
     this.spinner = ora("正在压缩文件");
-    this.spinner.start()
-    this.compress(this.destPath, this.zipPath);
+    this.spinner.start();
+    this.compress();
   }
 
-  compress(destDir, destPath) {
+  compress() {
     const admzip = new Zip();
-    admzip.addLocalFolder(destDir);
-    admzip.writeZip(destPath);
+    admzip.addLocalFolder(this.destDir);
+    admzip.writeZip(this.zipPath);
     this.spinner.stop();
     console.log(symbols.success, chalk.green(`压缩完成 ${this.zipPath}`));
   }
