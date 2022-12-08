@@ -39,10 +39,10 @@ async function handDeliver() {
   }
   const [, result] = await anyAwait(inquirer.prompt(prompts));
   console.log(symbols.warning, chalk.yellow(`选择时间${result["选择时间"]}`));
-  // new Pack2Zip({
-  //   ...opts,
-  //   selectedDate: result["选择时间"],
-  // }).start();
+  new Pack2Zip({
+    ...opts,
+    selectedDate: result["选择时间"],
+  }).start();
 }
 
 handDeliver();

@@ -1,13 +1,12 @@
 {
   "name": "verdaccio-zip",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "",
   "main": "lib/index.js",
-  "bin": "./bin/verdaccio-zip",
+  "bin": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "check": "node ./src/index.js -s /Users/wuzhuobin/Desktop/verdaccio/storage",
-    "check:lib": "node ./lib/index.js -s /Users/wuzhuobin/Desktop/verdaccio/storage",
+    "check": "node ./lib/index.js -s /Users/wuzhuobin/Desktop/verdaccio/storage",
     "del": "rm -rf ./dist",
     "watch": "npm run build -- --watch",
     "build": "./node_modules/.bin/babel src -d lib",
