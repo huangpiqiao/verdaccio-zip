@@ -31,14 +31,17 @@ async function handDeliver() {
     {
       type: "list",
       name: "选择时间",
-      choices: getDay(7),
+      choices: getDay(12),
     },
   ];
   if (!opts) {
     return;
   }
   const [, result] = await anyAwait(inquirer.prompt(prompts));
-  console.log(symbols.warning, chalk.yellow(`选择时间${result["选择时间"]}`));
+  console.log(
+    symbols.warning,
+    chalk.yellow(`选择${result["选择时间"]}或之后更新的npm包`)
+  );
   new Pack2Zip({
     ...opts,
     selectedDate: result["选择时间"],
