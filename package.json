@@ -1,9 +1,9 @@
 {
   "name": "verdaccio-zip",
-  "version": "1.0.5",
+  "version": "1.0.9",
   "description": "",
   "main": "lib/index.js",
-  "bin": "lib/index.js",
+  "bin": "bin/verdaccio-zip",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "check": "node ./lib/index.js -s /Users/wuzhuobin/Desktop/verdaccio/storage",
@@ -11,8 +11,12 @@
     "watch": "npm run build -- --watch",
     "build": "./node_modules/.bin/babel src -d lib",
     "preview": "npm run build && npm run check",
-    "publish": "npm publish --registry https://registry.npmjs.com"
+    "pl": "npm publish --registry https://registry.npmjs.com"
   },
+  "files": [
+    "lib",
+    "bin"
+  ],
   "keywords": [],
   "author": "WULIbinbin",
   "license": "ISC",
@@ -20,17 +24,17 @@
     "adm-zip": "^0.5.9",
     "chalk": "4.1.2",
     "commander": "^9.4.1",
-    "core-js": "3.6.5",
+    "cp-cli": "2.0.0",
     "dayjs": "^1.11.6",
     "inquirer": "8.2.5",
     "lodash": "^4.17.21",
     "log-symbols": "4.1.0",
-    "ora": "5.4.1"
+    "ora": "5.4.1",
+    "core-js": "3.6.5"
   },
   "devDependencies": {
     "@babel/cli": "^7.19.3",
     "@babel/core": "^7.20.2",
-    "@babel/preset-env": "^7.20.2",
-    "babel-plugin-transform-es2015-modules-amd": "^6.24.1"
+    "@babel/preset-env": "^7.20.2"
   }
 }
