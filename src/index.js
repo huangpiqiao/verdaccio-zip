@@ -1,17 +1,14 @@
 import fs from "fs";
 import { join } from "path";
-import chalk from "chalk";
-import symbols from "log-symbols";
 import { Command } from "commander";
+import replace from "lodash/replace";
 import inquirer from "inquirer";
 import { Pack2Zip } from "./main.js";
-import { anyAwait, checkRoot, getDay } from "./utils.js";
+import { anyAwait, checkRoot, prompts, getJson, conso } from "./utils.js";
 
 function getVersion() {
-  const pack = fs.readFileSync(join(__dirname, "../package.json"), {
-    encoding: "utf-8",
-  });
-  return JSON.parse(pack).version;
+  const pack = getJson(join(__dirname, "../package.json"));
+  return pack.version;
 }
 
 async function getProgram() {
@@ -27,40 +24,48 @@ async function getProgram() {
     const sourceDir = opts.source;
     const destDir = join(sourceDir, "../temp");
     const zipPath = join(sourceDir, "../npm.zip");
+    const packPath = join(sourceDir, "../package/package-lock.json");
     if (!fs.existsSync(destDir)) {
       fs.mkdirSync(destDir);
-      console.log(symbols.warning, chalk.yellow(`已创建缓存目录 ${destDir}`));
+      conso.warn(`已创建缓存目录 ${destDir}`);
     }
-    return { sourceDir, destDir, zipPath };
+    return { sourceDir, destDir, zipPath, packPath };
   }
   return null;
 }
 
-async function handDeliver() {
+function mapPackages(packages) {
+  return Object.entries(packages).map(([key, item]) => {
+    return {
+      package: replace(key, "node_modules/", ""),
+      version: item.version,
+      remoteUrl: item.resolved,
+    };
+  });
+}
+
+async function run() {
   const [, opts] = await anyAwait(getProgram());
-  const prompts = [
-    {
-      type: "list",
-      name: "选择时间",
-      choices: getDay(12),
-    },
-  ];
+  if (!opts) return;
+  const { packPath } = opts;
+  if (!fs.existsSync(packPath)) {
+    conso.error(`文件不存在！${packPath}`);
+    return;
+  }
+  const packages = mapPackages(getJson(packPath).packages);
+  
   if (!opts) {
-    console.log(
-      symbols.error,
-      chalk.red(`需要 -s/--source 添加verdaccio/storage目录`)
-    );
+    conso.error(`需要 -s/--source 添加verdaccio/storage目录`);
     return;
   }
   const [, result] = await anyAwait(inquirer.prompt(prompts));
-  console.log(
-    symbols.warning,
-    chalk.yellow(`选择${result["选择时间"]}或之后更新的npm包`)
-  );
+  const selectedDate = result["选择时间"];
+  selectedDate && conso.warn(`选择${result["选择时间"]}或之后更新的npm包`);
   new Pack2Zip({
     ...opts,
-    selectedDate: result["选择时间"],
-  }).start();
+    packages,
+    selectedDate: selectedDate || "",
+  }).start(result["选择查找方式"]);
 }
 
-handDeliver();
+run();

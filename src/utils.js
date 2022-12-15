@@ -1,4 +1,30 @@
+import fs from "fs/promises";
+import { readFileSync } from "fs";
 import dayjs from "dayjs";
+import chalk from "chalk";
+import symbols from "log-symbols";
+
+export const conso = {
+  warn(context) {
+    console.log(symbols.warning, chalk.yellow(context));
+  },
+  error(context) {
+    console.log(symbols.error, chalk.red(context));
+  },
+  success(context) {
+    console.log(symbols.success, chalk.green(context));
+  },
+  info(context) {
+    console.log(symbols.info, chalk.black(context));
+  },
+};
+
+export function getJson(path) {
+  const json = readFileSync(path, {
+    encoding: "utf-8",
+  });
+  return JSON.parse(json);
+}
 
 export function anyAwait(pms) {
   if (!pms || !pms.then) throw new Error("anyAwait:参数必须是promise");
@@ -9,8 +35,55 @@ export function checkRoot(p = "") {
   return !!p && p !== "/";
 }
 
-export function getDay(days = 7){
-  return new Array(days).fill('').map((item,idx)=>{
-    return dayjs(new Date()).subtract(idx, 'day').format('YYYY-MM-DD')
-  })
+export function getDay(days = 7) {
+  return new Array(days).fill("").map((item, idx) => {
+    return dayjs(new Date()).subtract(idx, "day").format("YYYY-MM-DD");
+  });
 }
+
+export function clearDir(target) {
+  function clear(sourceDir) {
+    return new Promise((resolve) => {
+      fs.stat(sourceDir).then((stat) => {
+        if (stat.isDirectory()) {
+          fs.readdir(sourceDir).then((result) => {
+            const mapPms = result.map((file) => clear(`${sourceDir}/${file}`));
+            Promise.all(mapPms).then(() => {
+              // 不删除目标文件夹
+              if (sourceDir === target) return resolve();
+              fs.rmdir(sourceDir).then(() => resolve());
+            });
+          });
+        } else {
+          fs.unlink(sourceDir).then(() => resolve());
+        }
+      });
+    });
+  }
+  return clear(target).then(() => true);
+}
+
+export const prompts = [
+  {
+    type: "list",
+    name: "选择查找方式",
+    choices: [
+      {
+        name: "根据verdaccio/storage目录内下载的最新的npm包查找",
+        value: "walk",
+      },
+      {
+        name: "根据verdaccio/package项目内的package-lock.json查找",
+        value: "map",
+      },
+    ],
+  },
+  {
+    type: "list",
+    name: "选择时间",
+    choices: getDay(12),
+    when: (answer) => {
+      return answer["选择查找方式"] === "walk";
+    },
+  },
+]; 

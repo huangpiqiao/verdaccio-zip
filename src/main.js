@@ -1,13 +1,11 @@
 import fs from "fs/promises";
 import { existsSync, mkdirSync } from "fs";
-import { resolve, extname } from "path";
+import { extname } from "path";
 import debounce from "lodash/debounce";
 import replace from "lodash/replace";
 import ora from "ora";
-import chalk from "chalk";
-import symbols from "log-symbols";
 import Zip from "adm-zip";
-import { anyAwait } from "./utils.js";
+import { anyAwait, clearDir, conso } from "./utils.js";
 
 function isNotTgz(sourcePath) {
   return extname(sourcePath) !== ".tgz";
@@ -42,44 +40,36 @@ function createDestChildsDir(sourceDir, destDir) {
 }
 
 export class Pack2Zip {
-  constructor({ sourceDir, destDir, zipPath, selectedDate }) {
+  constructor({ sourceDir, destDir, zipPath, packages, selectedDate }) {
     this.sourceDir = sourceDir;
     this.destDir = destDir;
     this.zipPath = zipPath;
+    this.packages = packages;
     this.selectedDate = new Date(selectedDate).getTime();
     this.finish = debounce(this.startCompress, 200);
     this.spinner = ora(`正在复制文件至 ${destDir} \n`);
   }
 
-  async start() {
-    const { sourceDir, destDir, spinner } = this;
+  async start(type = "walk") {
+    const { sourceDir, destDir, spinner, packages } = this;
     spinner.clear();
-    try {
-      const res = await this.clearTemp(destDir);
-      await this.walk(sourceDir);
-    } catch (err) {
+    const [err] = await anyAwait(clearDir(destDir));
+    if (err) {
       spinner.stop();
-      console.log(`复制错误:${err}`);
+      conso.error(`复制错误:${err}`);
+      return;
+    }
+    if (type === "walk") {
+      this.walk(sourceDir);
+    } else {
+      this.map();
     }
   }
 
-  clearTemp(sourceDir) {
-    return new Promise((resolve) => {
-      fs.stat(sourceDir).then((stat) => {
-        if (stat.isDirectory()) {
-          fs.readdir(sourceDir).then((result) => {
-            const mapPms = result.map((file) =>
-              this.clearTemp(`${sourceDir}/${file}`)
-            );
-            Promise.all(mapPms).then(() => {
-              if (sourceDir === this.destDir) return resolve();
-              fs.rmdir(sourceDir).then(() => resolve());
-            });
-          });
-        } else {
-          fs.unlink(sourceDir).then(() => resolve());
-        }
-      });
+  async map() {
+    const { sourceDir, packages } = this;
+    packages.forEach((item) => {
+      console.log(item);
     });
   }
 
@@ -106,7 +96,7 @@ export class Pack2Zip {
     const packJsonFrom = (dp) => `${dp}/package.json`;
     await fs.copyFile(sourcePath, destPath);
     await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
-    console.log(symbols.success, chalk.black(`当前复制 ${sourcePath}`));
+    conso.info(`当前复制 ${sourcePath}`)
     this.finish();
   }
 
@@ -121,6 +111,6 @@ export class Pack2Zip {
     admzip.addLocalFolder(this.destDir);
     admzip.writeZip(this.zipPath);
     this.spinner.stop();
-    console.log(symbols.success, chalk.green(`压缩完成 ${this.zipPath}`));
+    conso.success(`压缩完成 ${this.zipPath}`)
   }
 }
