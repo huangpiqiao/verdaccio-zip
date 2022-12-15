@@ -1,43 +1,19 @@
 import fs from "fs/promises";
-import { existsSync, mkdirSync } from "fs";
-import { extname } from "path";
+import { existsSync } from "fs";
+import { join } from "path";
 import debounce from "lodash/debounce";
 import replace from "lodash/replace";
 import ora from "ora";
 import Zip from "adm-zip";
-import { anyAwait, clearDir, conso } from "./utils.js";
-
-function isNotTgz(sourcePath) {
-  return extname(sourcePath) !== ".tgz";
-}
-
-function isOldFile(mtms, ot) {
-  return mtms < ot;
-}
-
-async function sourceInfo(sourcePath) {
-  const stat = await fs.stat(sourcePath);
-  const info = {
-    mtime: stat.mtime,
-    mtms: new Date(stat.mtime).getTime(),
-    isDirectory: stat.isDirectory(),
-  };
-  return info;
-}
-
-function createDestChildsDir(sourceDir, destDir) {
-  const childsHash = replace(sourceDir, destDir, "")
-    .split("/")
-    .filter((hash) => !!hash);
-  childsHash.forEach((hash, idx) => {
-    const dir = (destDir += `/${hash}${
-      idx === childsHash.length - 1 ? "/" : ""
-    }`);
-    if (!existsSync(dir)) {
-      mkdirSync(dir);
-    }
-  });
-}
+import {
+  anyAwait,
+  clearDir,
+  conso,
+  isNotTgz,
+  isOldFile,
+  sourceInfo,
+  createDestChildsDir,
+} from "./utils.js";
 
 export class Pack2Zip {
   constructor({ sourceDir, destDir, zipPath, packages, selectedDate }) {
@@ -51,7 +27,7 @@ export class Pack2Zip {
   }
 
   async start(type = "walk") {
-    const { sourceDir, destDir, spinner, packages } = this;
+    const { sourceDir, destDir, spinner } = this;
     spinner.clear();
     const [err] = await anyAwait(clearDir(destDir));
     if (err) {
@@ -68,8 +44,16 @@ export class Pack2Zip {
 
   async map() {
     const { sourceDir, packages } = this;
-    packages.forEach((item) => {
-      console.log(item);
+    packages.forEach(async (item) => {
+      const packageDir = join(sourceDir, item.package);
+      const itemName = `${item.package}-${item.version}.tgz`;
+      const packagePath = join(packageDir, itemName);
+      console.log(packagePath);
+      if (existsSync(packagePath)) {
+        this.copy(packagePath, packageDir, itemName);
+      } else {
+        conso.error(`文件未下载 ${packagePath}`);
+      }
     });
   }
 
@@ -96,7 +80,7 @@ export class Pack2Zip {
     const packJsonFrom = (dp) => `${dp}/package.json`;
     await fs.copyFile(sourcePath, destPath);
     await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
-    conso.info(`当前复制 ${sourcePath}`)
+    conso.info(`当前复制 ${sourcePath}`);
     this.finish();
   }
 
@@ -111,6 +95,6 @@ export class Pack2Zip {
     admzip.addLocalFolder(this.destDir);
     admzip.writeZip(this.zipPath);
     this.spinner.stop();
-    conso.success(`压缩完成 ${this.zipPath}`)
+    conso.success(`压缩完成 ${this.zipPath}`);
   }
 }

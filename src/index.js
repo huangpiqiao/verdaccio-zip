@@ -2,6 +2,7 @@ import fs from "fs";
 import { join } from "path";
 import { Command } from "commander";
 import replace from "lodash/replace";
+import last from "lodash/last";
 import inquirer from "inquirer";
 import { Pack2Zip } from "./main.js";
 import { anyAwait, checkRoot, prompts, getJson, conso } from "./utils.js";
@@ -35,13 +36,16 @@ async function getProgram() {
 }
 
 function mapPackages(packages) {
-  return Object.entries(packages).map(([key, item]) => {
-    return {
-      package: replace(key, "node_modules/", ""),
-      version: item.version,
-      remoteUrl: item.resolved,
-    };
-  });
+  return Object.entries(packages)
+    .filter(([key]) => !!key)
+    .map(([key, item]) => {
+      const packName = last(key.split("node_modules/"));
+      return {
+        package: packName,
+        version: item.version,
+        remoteUrl: item.resolved,
+      };
+    });
 }
 
 async function run() {
@@ -53,7 +57,7 @@ async function run() {
     return;
   }
   const packages = mapPackages(getJson(packPath).packages);
-  
+
   if (!opts) {
     conso.error(`需要 -s/--source 添加verdaccio/storage目录`);
     return;

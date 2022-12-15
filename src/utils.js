@@ -1,8 +1,10 @@
 import fs from "fs/promises";
-import { readFileSync } from "fs";
+import { readFileSync, mkdirSync, existsSync } from "fs";
 import dayjs from "dayjs";
 import chalk from "chalk";
 import symbols from "log-symbols";
+import { extname } from "path";
+import replace from "lodash/replace";
 
 export const conso = {
   warn(context) {
@@ -86,4 +88,36 @@ export const prompts = [
       return answer["选择查找方式"] === "walk";
     },
   },
-]; 
+];
+
+export function isNotTgz(sourcePath) {
+  return extname(sourcePath) !== ".tgz";
+}
+
+export function isOldFile(mtms, ot) {
+  return mtms < ot;
+}
+
+export async function sourceInfo(sourcePath) {
+  const stat = await fs.stat(sourcePath);
+  const info = {
+    mtime: stat.mtime,
+    mtms: new Date(stat.mtime).getTime(),
+    isDirectory: stat.isDirectory(),
+  };
+  return info;
+}
+
+export function createDestChildsDir(sourceDir, destDir) {
+  const childsHash = replace(sourceDir, destDir, "")
+    .split("/")
+    .filter((hash) => !!hash);
+  childsHash.forEach((hash, idx) => {
+    const dir = (destDir += `/${hash}${
+      idx === childsHash.length - 1 ? "/" : ""
+    }`);
+    if (!existsSync(dir)) {
+      mkdirSync(dir);
+    }
+  });
+}
