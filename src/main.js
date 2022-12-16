@@ -85,7 +85,7 @@ export class Pack2Zip {
     return new Promise((resolve) => {
       if (!existsSync(packagePath)) {
         this.finish = null;
-        conso.error(`正在下载 ${packagePath}`);
+        conso.warn(`正在下载 ${packagePath}`);
         download(remoteUrl, packageDir).then(() => {
           conso.success(`下载完成 ${remoteUrl}`);
           this.finish = debounce(this.startCompress, 1000);
