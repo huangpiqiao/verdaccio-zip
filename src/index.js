@@ -63,14 +63,14 @@ async function run() {
     conso.error(`需要 -s/--source 添加verdaccio/storage目录`);
     return;
   }
-  const [, result] = await anyAwait(inquirer.prompt(prompts));
-  const selectedDate = result["选择时间"];
-  selectedDate && conso.warn(`选择${result["选择时间"]}或之后更新的npm包`);
+  // const [, result] = await anyAwait(inquirer.prompt(prompts));
+  // const selectedDate = result["选择时间"];
+  // selectedDate && conso.warn(`选择${result["选择时间"]}或之后更新的npm包`);
   new Pack2Zip({
     ...opts,
     packages,
-    selectedDate: selectedDate || "",
-  }).start(result["选择查找方式"]);
+    // selectedDate: selectedDate || "",
+  }).start('map');
 }
 
 run();
