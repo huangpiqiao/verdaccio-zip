@@ -14,6 +14,7 @@ import {
   sourceInfo,
   createDestChildsDir,
 } from "./utils.js";
+import download from "download";
 
 export class Pack2Zip {
   constructor({ sourceDir, destDir, zipPath, packages, selectedDate }) {
@@ -22,7 +23,7 @@ export class Pack2Zip {
     this.zipPath = zipPath;
     this.packages = packages;
     this.selectedDate = new Date(selectedDate).getTime();
-    this.finish = debounce(this.startCompress, 200);
+    this.finish = debounce(this.startCompress, 1000);
     this.spinner = ora(`正在复制文件至 ${destDir} \n`);
   }
 
@@ -45,15 +46,11 @@ export class Pack2Zip {
   async map() {
     const { sourceDir, packages } = this;
     packages.forEach(async (item) => {
-      const packageDir = join(sourceDir, item.package);
-      const itemName = `${item.package}-${item.version}.tgz`;
+      const packageDir = join(sourceDir, item.packPath);
+      const itemName = `${item.packName}-${item.version}.tgz`;
       const packagePath = join(packageDir, itemName);
-      console.log(packagePath);
-      if (existsSync(packagePath)) {
-        this.copy(packagePath, packageDir, itemName);
-      } else {
-        conso.error(`文件未下载 ${packagePath}`);
-      }
+      await this.shouildDownloadFile(item.remoteUrl, packagePath, packageDir);
+      await this.copy(packagePath, packageDir, itemName);
     });
   }
 
@@ -81,7 +78,23 @@ export class Pack2Zip {
     await fs.copyFile(sourcePath, destPath);
     await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
     conso.info(`当前复制 ${sourcePath}`);
-    this.finish();
+    this.finish && this.finish();
+  }
+
+  shouildDownloadFile(remoteUrl, packagePath, packageDir) {
+    return new Promise((resolve) => {
+      if (!existsSync(packagePath)) {
+        this.finish = null;
+        conso.error(`正在下载 ${packagePath}`);
+        download(remoteUrl, packageDir).then(() => {
+          conso.success(`下载完成 ${remoteUrl}`);
+          this.finish = debounce(this.startCompress, 1000);
+          resolve();
+        });
+        return;
+      }
+      resolve();
+    });
   }
 
   async startCompress() {

@@ -39,9 +39,11 @@ function mapPackages(packages) {
   return Object.entries(packages)
     .filter(([key]) => !!key)
     .map(([key, item]) => {
-      const packName = last(key.split("node_modules/"));
+      const packPath = last(key.split("node_modules/"));
+      const packName = last(key.split("/"));
       return {
-        package: packName,
+        packPath,
+        packName,
         version: item.version,
         remoteUrl: item.resolved,
       };
