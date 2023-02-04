@@ -7,7 +7,10 @@ npm install -g verdaccio-zip
 ```
 
 ## 用法
-#### 1、将verdaccio的npm包下载目录设置为 */User/xxx/verdaccio/storage*
-#### 2、运行 *verdaccio-zip -s /User/xxx/verdaccio/storage*
-#### 3、在/User/xxx/verdaccio目录下新建命名为package的*npm*项目，使用*npm install*安装需要压缩的npm包
-#### 4、npm包最终复制到*verdaccio/temp*目录，并生成压缩文件至*verdaccio/npm.zip*
+#### 1、将verdaccio的npm包下载目录设置为 */Users/xxx/verdaccio/storage* (未安装verdaccio则直接创建目录)
+#### 2、在 */Users/xxx/verdaccio*目录下新建命名为 *package*的项目， *npm init*初始化后使用*npm install*安装npm包
+#### 3、执行命令，工具会根据 *package-lock.json*下载npm包
+```js
+verdaccio-zip -s /Users/xxx/verdaccio/storage
+```
+#### 4、下载的npm包最终复制到*verdaccio/temp*目录，并生成压缩文件至*verdaccio/npm.zip*

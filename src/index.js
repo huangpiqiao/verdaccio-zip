@@ -31,6 +31,8 @@ async function getProgram() {
       conso.warn(`已创建缓存目录 ${destDir}`);
     }
     return { sourceDir, destDir, zipPath, packPath };
+  } else {
+    conso.error(`请添加npm包下载目录！`);
   }
   return null;
 }
@@ -70,7 +72,7 @@ async function run() {
     ...opts,
     packages,
     // selectedDate: selectedDate || "",
-  }).start('map');
+  }).start("map");
 }
 
 run();
