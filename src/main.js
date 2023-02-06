@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
-import debounce from "lodash/debounce";
+// import debounce from "lodash/debounce";
 import replace from "lodash/replace";
 import ora from "ora";
 import Zip from "adm-zip";
@@ -23,7 +23,7 @@ export class Pack2Zip {
     this.zipPath = zipPath;
     this.packages = packages;
     this.selectedDate = new Date(selectedDate).getTime();
-    this.finish = debounce(this.startCompress, 1000);
+    // this.finish = debounce(this.startCompress, 1000);
     this.spinner = ora(`正在复制文件至 ${destDir} \n`);
   }
 
@@ -36,38 +36,44 @@ export class Pack2Zip {
       conso.error(`复制错误:${err}`);
       return;
     }
+    this.spinner.start();
     if (type === "walk") {
-      this.walk(sourceDir);
+      this.spinner = ora(`正在复制文件至 ${destDir} \n`);
+      await this.walk(sourceDir);
     } else {
-      this.map();
+      await this.map();
     }
+    this.spinner.stop();
+    conso.success(`复制文件完成`);
+    this.startCompress();
   }
 
   async map() {
     const { sourceDir, packages } = this;
-    packages.forEach(async (item) => {
+    for (const item of packages) {
       const packageDir = join(sourceDir, item.packPath);
       const itemName = `${item.packName}-${item.version}.tgz`;
       const packagePath = join(packageDir, itemName);
+      const packageJsonPath = join(sourceDir, 'data', item.packPath);
       await this.shouildDownloadFile(item.remoteUrl, packagePath, packageDir);
-      await this.copy(packagePath, packageDir, itemName);
-    });
+      await this.copy(packagePath, packageJsonPath, itemName);
+    }
   }
 
   async walk(sourceDir) {
     const [err, result] = await anyAwait(fs.readdir(sourceDir));
     if (err) throw new Error(err);
-    result.forEach(async (itemName) => {
-      const itemPath = `${sourceDir}/${itemName}`;
+    for (const itemName of result) {
+      const itemPath = `${sourceDir}/data/${itemName}`;
       const { isDirectory, mtms } = await sourceInfo(itemPath);
       if (isDirectory) {
-        this.walk(itemPath);
-        return;
+        await this.walk(itemPath);
+        continue;
       }
-      if (isNotTgz(itemPath)) return;
-      if (isOldFile(mtms, this.selectedDate)) return;
-      this.copy(itemPath, sourceDir, itemName);
-    });
+      if (isNotTgz(itemPath)) continue;
+      if (isOldFile(mtms, this.selectedDate)) continue;
+      await this.copy(itemPath, sourceDir, itemName);
+    }
   }
 
   async copy(sourcePath, sourceDir, sourceName) {
@@ -78,17 +84,17 @@ export class Pack2Zip {
     await fs.copyFile(sourcePath, destPath);
     await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
     conso.info(`当前复制 ${sourcePath}`);
-    this.finish && this.finish();
+    // this.finish && this.finish();
   }
 
   shouildDownloadFile(remoteUrl, packagePath, packageDir) {
     return new Promise((resolve) => {
       if (!existsSync(packagePath)) {
-        this.finish = null;
+        // this.finish = null;
         conso.warn(`正在下载 ${packagePath}`);
         download(remoteUrl, packageDir).then(() => {
           conso.success(`下载完成 ${remoteUrl}`);
-          this.finish = debounce(this.startCompress, 1000);
+          // this.finish = debounce(this.startCompress, 1000);
           resolve();
         });
         return;
@@ -97,8 +103,8 @@ export class Pack2Zip {
     });
   }
 
-  async startCompress() {
-    this.spinner = ora("正在压缩文件");
+  startCompress() {
+    this.spinner = ora("正在压缩文件\n");
     this.spinner.start();
     this.compress();
   }
@@ -108,6 +114,6 @@ export class Pack2Zip {
     admzip.addLocalFolder(this.destDir);
     admzip.writeZip(this.zipPath);
     this.spinner.stop();
-    conso.success(`压缩完成 ${this.zipPath}`);
+    conso.success(`压缩文件完成`);
   }
 }

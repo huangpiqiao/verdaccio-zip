@@ -68,7 +68,7 @@ async function run() {
   // const [, result] = await anyAwait(inquirer.prompt(prompts));
   // const selectedDate = result["选择时间"];
   // selectedDate && conso.warn(`选择${result["选择时间"]}或之后更新的npm包`);
-  new Pack2Zip({
+  await new Pack2Zip({
     ...opts,
     packages,
     // selectedDate: selectedDate || "",
