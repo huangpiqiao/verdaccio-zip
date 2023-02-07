@@ -38,7 +38,6 @@ export class Pack2Zip {
     }
     this.spinner.start();
     if (type === "walk") {
-      this.spinner = ora(`正在复制文件至 ${destDir} \n`);
       await this.walk(sourceDir);
     } else {
       await this.map();
@@ -81,9 +80,16 @@ export class Pack2Zip {
     const destDir = replace(destPath, sourceName, "");
     createDestChildsDir(destDir, this.destDir);
     const packJsonFrom = (dp) => `${dp}/package.json`;
-    await fs.copyFile(sourcePath, destPath);
-    await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir));
-    conso.info(`当前复制 ${sourcePath}`);
+    conso.warn(`当前复制 ${sourcePath} => ${destPath}`);
+    await fs.copyFile(sourcePath, destPath).catch(() => {
+      conso.error(`复制失败`);
+    });
+    conso.success(`复制成功`);
+    conso.warn(`当前复制 ${packJsonFrom(sourceDir)} => ${packJsonFrom(destDir)}`);
+    await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir)).catch(() => {
+      conso.error(`复制失败`);
+    });
+    conso.success(`复制成功`);
     // this.finish && this.finish();
   }
 

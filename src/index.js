@@ -1,11 +1,11 @@
 import fs from "fs";
 import { join } from "path";
 import { Command } from "commander";
-import replace from "lodash/replace";
+// import replace from "lodash/replace";
 import last from "lodash/last";
-import inquirer from "inquirer";
+// import inquirer from "inquirer";
 import { Pack2Zip } from "./main.js";
-import { anyAwait, checkRoot, prompts, getJson, conso } from "./utils.js";
+import { anyAwait, checkRoot, getJson, conso } from "./utils.js";
 
 function getVersion() {
   const pack = getJson(join(__dirname, "../package.json"));
