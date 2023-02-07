@@ -95,9 +95,10 @@ export class Pack2Zip {
 
   shouildDownloadFile(remoteUrl, packagePath, packageDir) {
     return new Promise((resolve) => {
-      if (!existsSync(packagePath)) {
+      console.log(packagePath, 'packagePath')
+      if (!existsSync(packagePath) && remoteUrl) {
         // this.finish = null;
-        conso.warn(`正在下载 ${packagePath}`);
+        conso.warn(`正在下载 ${remoteUrl}`);
         download(remoteUrl, packageDir).then(() => {
           conso.success(`下载完成 ${remoteUrl}`);
           // this.finish = debounce(this.startCompress, 1000);

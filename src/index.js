@@ -60,7 +60,8 @@ async function run() {
     conso.error(`文件不存在！${packPath}`);
     return;
   }
-  const packages = mapPackages(getJson(packPath).dependencies);
+  const packages = mapPackages(getJson(packPath).packages);
+  console.log(packages);
   if (!opts) {
     conso.error(`需要 -s/--source 添加verdaccio/storage目录`);
     return;
