@@ -47,6 +47,7 @@ export class Pack2Zip {
     this.startCompress();
   }
 
+  // node 16以上版本使用
   async map() {
     const { sourceDir, packages } = this;
     for (const item of packages) {

@@ -52,6 +52,24 @@ function mapPackages(packages) {
     });
 }
 
+// 16一下版本使用
+function mapDependencies(dependencies, result = []) {
+  Object.entries(dependencies).forEach(([key, item]) => {
+    const packName = last(key.split("/"));
+    const packPath = key;
+    result.push({
+      packPath,
+      packName,
+      version: item.version,
+      remoteUrl: item.resolved,
+    })
+    if(item.dependencies) {
+      mapDependencies(item.dependencies, result);
+    }
+  });
+  return result;
+}
+
 async function run() {
   const [, opts] = await anyAwait(getProgram());
   if (!opts) return;
@@ -60,8 +78,16 @@ async function run() {
     conso.error(`文件不存在！${packPath}`);
     return;
   }
-  const packages = mapPackages(getJson(packPath).packages);
-  console.log(packages);
+  // console.log(getJson(packPath).dependencies);
+  const lockJson = getJson(packPath);
+  let packages = [];
+  // 16以上版本
+  if(lockJson.packages) {
+    packages = mapPackages(getJson(packPath).packages);
+  } else {
+    packages = mapDependencies(getJson(packPath).dependencies)
+  }
+  console.log('packages', packages);
   if (!opts) {
     conso.error(`需要 -s/--source 添加verdaccio/storage目录`);
     return;
