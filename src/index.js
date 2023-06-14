@@ -83,9 +83,9 @@ async function run() {
   let packages = [];
   // 16以上版本
   if(lockJson.packages) {
-    packages = mapPackages(getJson(packPath).packages);
+    packages = mapPackages(lockJson.packages);
   } else {
-    packages = mapDependencies(getJson(packPath).dependencies)
+    packages = mapDependencies(lockJson.dependencies)
   }
   console.log('packages', packages);
   if (!opts) {
