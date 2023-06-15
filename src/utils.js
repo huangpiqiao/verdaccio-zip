@@ -3,7 +3,7 @@ import { readFileSync, mkdirSync, existsSync } from "fs";
 import dayjs from "dayjs";
 import chalk from "chalk";
 import symbols from "log-symbols";
-import { extname } from "path";
+import { extname, join } from "path";
 import replace from "lodash/replace";
 
 export const conso = {
@@ -109,13 +109,16 @@ export async function sourceInfo(sourcePath) {
 }
 
 export function createDestChildsDir(sourceDir, destDir) {
+  let split = process.platform === 'win32' ? '\\' : '/';
+  let dir = destDir;
   const childsHash = replace(sourceDir, destDir, "")
-    .split("/")
+    .split(split)
     .filter((hash) => !!hash);
   childsHash.forEach((hash, idx) => {
-    const dir = (destDir += `/${hash}${
+    dir = join(dir, `/${hash}${
       idx === childsHash.length - 1 ? "/" : ""
-    }`);
+    }`)
+    // console.log(childsHash, dir);
     if (!existsSync(dir)) {
       mkdirSync(dir);
     }

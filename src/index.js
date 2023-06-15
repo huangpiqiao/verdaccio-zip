@@ -19,18 +19,20 @@ async function getProgram() {
     .description("Compress relevant npm files into zip")
     .version(getVersion(), "-v --version")
     .option("-s, --source <url>", "verdaccio source", "")
+    .option("-r, --replace", "Need packege.json to replace source package", "")
     .parse(process.argv);
   const opts = program.opts();
   if (checkRoot(opts.source)) {
-    const sourceDir = opts.source;
+    const sourceDir = join(opts.source);
     const destDir = join(sourceDir, "../temp");
     const zipPath = join(sourceDir, "../npm.zip");
     const packPath = join(sourceDir, "../package/package-lock.json");
+    const replace = !!opts.replace;
     if (!fs.existsSync(destDir)) {
       fs.mkdirSync(destDir);
       conso.warn(`已创建缓存目录 ${destDir}`);
     }
-    return { sourceDir, destDir, zipPath, packPath };
+    return { sourceDir, destDir, zipPath, packPath, replace };
   } else {
     conso.error(`请添加npm包下载目录！`);
   }
@@ -87,7 +89,7 @@ async function run() {
   } else {
     packages = mapDependencies(lockJson.dependencies)
   }
-  console.log('packages', packages);
+  console.log('opts', opts);
   if (!opts) {
     conso.error(`需要 -s/--source 添加verdaccio/storage目录`);
     return;

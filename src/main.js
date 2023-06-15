@@ -17,11 +17,12 @@ import {
 import download from "download";
 
 export class Pack2Zip {
-  constructor({ sourceDir, destDir, zipPath, packages, selectedDate }) {
+  constructor({ sourceDir, destDir, zipPath, packages, selectedDate, replace }) {
     this.sourceDir = sourceDir;
     this.destDir = destDir;
     this.zipPath = zipPath;
     this.packages = packages;
+    this.replace = replace;
     this.selectedDate = new Date(selectedDate).getTime();
     // this.finish = debounce(this.startCompress, 1000);
     this.spinner = ora(`正在复制文件至 ${destDir} \n`);
@@ -80,17 +81,22 @@ export class Pack2Zip {
     const destPath = replace(sourcePath, this.sourceDir, this.destDir);
     const destDir = replace(destPath, sourceName, "");
     createDestChildsDir(destDir, this.destDir);
-    const packJsonFrom = (dp) => `${dp}/package.json`;
+    const packJsonFrom = (dp) => join(dp, 'package.json');
     conso.warn(`当前复制 ${sourcePath} => ${destPath}`);
-    await fs.copyFile(sourcePath, destPath).catch(() => {
+    await fs.copyFile(sourcePath, destPath).then(() => {
+      conso.success(`复制成功`);
+    }).catch(() => {
       conso.error(`复制失败`);
     });
-    conso.success(`复制成功`);
-    conso.warn(`当前复制 ${packJsonFrom(sourceDir)} => ${packJsonFrom(destDir)}`);
-    await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir)).catch(() => {
-      conso.error(`复制失败`);
-    });
-    conso.success(`复制成功`);
+    if (this.replace) {
+      conso.warn(`当前复制 ${packJsonFrom(sourceDir)} => ${packJsonFrom(destDir)}`);
+      await fs.copyFile(packJsonFrom(sourceDir), packJsonFrom(destDir)).then(() => {
+        conso.success(`复制成功`);
+      }).catch(() => {
+        conso.error(`复制失败`);
+      });
+    }
+    // conso.success(`复制成功`);
     // this.finish && this.finish();
   }
 
